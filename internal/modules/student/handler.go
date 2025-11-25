@@ -3,6 +3,7 @@ package student
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/TheGauravsahu/school-api/internal/modules/user"
 	"github.com/TheGauravsahu/school-api/internal/utils"
@@ -108,4 +109,96 @@ func (h *Handler) ImportStudents(w http.ResponseWriter, r *http.Request) {
 		"failed":    failed,
 		"errors":    errs,
 	})
+}
+
+func (h *Handler) GetAllStudents(w http.ResponseWriter, r *http.Request) {
+	schoolIDParam := r.URL.Query().Get("schoolId")
+
+	// fetch by school
+	if schoolIDParam != "" {
+		schoolID, err := strconv.Atoi(schoolIDParam)
+		if err != nil {
+			utils.WriteError(w, http.StatusBadRequest, "Invalid schoolId")
+			return
+		}
+
+		students, err := h.StudentRepo.FindBySchool(uint(schoolID))
+		if err != nil {
+			utils.WriteError(w, http.StatusInternalServerError, "Could not fetch students.")
+			return
+		}
+
+		utils.WriteJson(w, http.StatusOK, map[string]any{
+			"message":  "Fetched students by school.",
+			"students": students,
+		})
+		return
+	}
+
+	students, err := h.StudentRepo.FindAll()
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, "Could not fetch students.")
+		return
+	}
+
+	utils.WriteJson(w, http.StatusOK, map[string]any{
+		"message":  "Fetched all students.",
+		"students": students,
+	})
+}
+
+func (h *Handler) GetStudentById(w http.ResponseWriter, r *http.Request) {
+	idStr := r.PathValue("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "Invalid ID")
+		return
+	}
+
+	student, err := h.StudentRepo.GetStudentByID(uint(id))
+	if err != nil {
+		utils.WriteError(w, http.StatusNotFound, "Student not found.")
+		return
+	}
+
+	utils.WriteJson(w, http.StatusOK, map[string]any{
+		"message": "Student retrived successfully.",
+		"student": student,
+	})
+}
+
+func (h *Handler) UpdateStudent(w http.ResponseWriter, r *http.Request) {
+	idStr := r.PathValue("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "Invalid student ID")
+		return
+	}
+
+	var body map[string]interface{}
+	if ok := utils.ParseJson(w, r, &body); !ok {
+		return
+	}
+
+	if err := h.StudentRepo.UpdateStudent(uint(id), body); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, "Failed to update student")
+		return
+	}
+	utils.WriteJson(w, http.StatusOK, map[string]any{"message": "Updated successfully"})
+}
+
+func (h *Handler) DeleteStudent(w http.ResponseWriter, r *http.Request) {
+	idStr := r.PathValue("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "Invalid ID")
+		return
+	}
+
+	if err := h.StudentRepo.DeleteStudent(uint(id)); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, "Failed to delete student")
+		return
+	}
+
+	utils.WriteJson(w, http.StatusOK, map[string]string{"message": "Deleted successfully"})
 }
