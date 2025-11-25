@@ -3,6 +3,7 @@ package admin
 import (
 	"net/http"
 
+	"github.com/TheGauravsahu/school-api/internal/middlewares"
 	"github.com/TheGauravsahu/school-api/internal/modules/student"
 )
 
@@ -11,5 +12,5 @@ type Handler struct {
 }
 
 func Router(h *Handler) {
-	http.HandleFunc("POST /api/admin/students", h.StudentHandler.CreateStudent)
+	http.HandleFunc("POST /api/admin/students", middlewares.AuthMiddleware(h.StudentHandler.CreateStudent, "ADMIN", "TEACHER"))
 }
