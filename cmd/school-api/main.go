@@ -6,18 +6,21 @@ import (
 	"net/http"
 
 	"github.com/TheGauravsahu/school-api/internal/config"
+	"github.com/TheGauravsahu/school-api/internal/modules/auth"
+	"github.com/TheGauravsahu/school-api/internal/modules/school"
 	"github.com/TheGauravsahu/school-api/internal/modules/user"
 )
 
 func main() {
 	config.ConnectDB()
 
-	// AutoMigrate
-	config.DB.AutoMigrate(&user.User{})
-
 	userRepo := user.NewRepository(config.DB)
-	userHandler := user.NewHandler(userRepo)
-	user.Router(userHandler)
+	schoolRepo := school.NewRepository(config.DB)
+
+	authService := auth.NewService(schoolRepo, userRepo)
+	authHandler := auth.NewHandler(authService)
+
+	auth.Router(authHandler)
 
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "Server is running...")
