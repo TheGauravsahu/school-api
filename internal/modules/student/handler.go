@@ -1,6 +1,7 @@
 package student
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/TheGauravsahu/school-api/internal/modules/user"
@@ -69,4 +70,42 @@ func (h *Handler) CreateStudent(w http.ResponseWriter, r *http.Request) {
 		"student": student,
 	})
 
+}
+
+func (h *Handler) ImportStudents(w http.ResponseWriter, r *http.Request) {
+	var jobsSlice []ImportJob
+	if ok := utils.ParseJson(w, r, &jobsSlice); !ok {
+		return
+	}
+
+	if len(jobsSlice) == 0 {
+		utils.WriteError(w, http.StatusBadRequest, "no student data provided")
+		return
+	}
+
+	// create channel
+	jobs := make(chan ImportJob, len(jobsSlice))
+	results := StartWokerPool(10, jobs, h.StudentRepo, h.UserRepo)
+
+	for _, j := range jobsSlice {
+		jobs <- j
+	}
+	close(jobs)
+
+	var failed int
+	var processed int
+	var errs []string
+	for res := range results {
+		processed++
+		if res.Error != nil {
+			failed++
+			errs = append(errs, fmt.Sprintf("%s %s: %v", res.Job.FirstName, res.Job.LastName, res.Error))
+		}
+	}
+
+	utils.WriteJson(w, http.StatusOK, map[string]interface{}{
+		"processed": processed,
+		"failed":    failed,
+		"errors":    errs,
+	})
 }

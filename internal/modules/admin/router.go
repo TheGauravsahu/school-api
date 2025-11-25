@@ -13,4 +13,5 @@ type Handler struct {
 
 func Router(h *Handler) {
 	http.HandleFunc("POST /api/admin/students", middlewares.AuthMiddleware(h.StudentHandler.CreateStudent, "ADMIN", "TEACHER"))
+	http.HandleFunc("POST /api/admin/students/import", middlewares.AuthMiddleware(h.StudentHandler.ImportStudents, "ADMIN", "TEACHER"))
 }
