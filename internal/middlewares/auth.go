@@ -8,7 +8,7 @@ import (
 	"github.com/TheGauravsahu/school-api/internal/utils"
 )
 
-func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
+func AuthMiddleware(next http.HandlerFunc, allowedRoles ...string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
@@ -17,10 +17,25 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-		claims, err := utils.VerifyToken(tokenString)
+		claims, err := utils.VerifyAcessToken(tokenString)
+		role := claims["role"].(string)
 		if err != nil {
 			utils.WriteError(w, http.StatusUnauthorized, "invalid token")
 			return
+		}
+
+		if len(allowedRoles) > 0 {
+			allowed := false
+			for _, r := range allowedRoles {
+				if r == role {
+					allowed = true
+					break
+				}
+			}
+			if !allowed {
+				utils.WriteError(w, http.StatusForbidden, "forbidden: insufficient permissions")
+				return
+			}
 		}
 
 		ctx := r.Context()

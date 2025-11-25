@@ -6,8 +6,10 @@ import (
 	"net/http"
 
 	"github.com/TheGauravsahu/school-api/internal/config"
+	"github.com/TheGauravsahu/school-api/internal/modules/admin"
 	"github.com/TheGauravsahu/school-api/internal/modules/auth"
 	"github.com/TheGauravsahu/school-api/internal/modules/school"
+	"github.com/TheGauravsahu/school-api/internal/modules/student"
 	"github.com/TheGauravsahu/school-api/internal/modules/user"
 )
 
@@ -16,11 +18,21 @@ func main() {
 
 	userRepo := user.NewRepository(config.DB)
 	schoolRepo := school.NewRepository(config.DB)
+	studentRepo := student.NewRepository(config.DB)
 
 	authService := auth.NewService(schoolRepo, userRepo)
 	authHandler := auth.NewHandler(authService)
 
+	studentHandler := &student.Handler{
+		UserRepo:    userRepo,
+		StudentRepo: studentRepo,
+	}
+	adminHandler := &admin.Handler{
+		StudentHandler: studentHandler,
+	}
+
 	auth.Router(authHandler)
+	admin.Router(adminHandler)
 
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "Server is running...")
