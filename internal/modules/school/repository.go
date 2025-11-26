@@ -13,3 +13,4 @@ func NewRepository(db *gorm.DB) *Repository {
 func (r *Repository) CreateSchool(school *School) error {
 	return r.db.Create(school).Error
 }
+

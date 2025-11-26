@@ -6,8 +6,6 @@ import (
 	"github.com/TheGauravsahu/school-api/internal/middlewares"
 )
 
-
-
 func Router(h *Handler) {
 	http.HandleFunc("POST /api/admin/students", middlewares.AuthMiddleware(h.StudentHandler.CreateStudent, "ADMIN", "TEACHER"))
 	http.HandleFunc("POST /api/admin/students/import", middlewares.AuthMiddleware(h.StudentHandler.ImportStudents, "ADMIN", "TEACHER"))
@@ -15,4 +13,6 @@ func Router(h *Handler) {
 	http.HandleFunc("GET /api/admin/students/{id}", middlewares.AuthMiddleware(h.StudentHandler.GetStudentById, "ADMIN", "TEACHER"))
 	http.HandleFunc("PUT /api/admin/students/{id}", middlewares.AuthMiddleware(h.StudentHandler.UpdateStudent, "ADMIN"))
 	http.HandleFunc("DELETE /api/admin/students/{id}", middlewares.AuthMiddleware(h.StudentHandler.DeleteStudent, "ADMIN"))
+
+	http.HandleFunc("POST /api/admin/teachers", middlewares.AuthMiddleware(h.TeacherHandler.CreateTeacher, "ADMIN"))
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/TheGauravsahu/school-api/internal/modules/auth"
 	"github.com/TheGauravsahu/school-api/internal/modules/school"
 	"github.com/TheGauravsahu/school-api/internal/modules/student"
+	"github.com/TheGauravsahu/school-api/internal/modules/teacher"
 	"github.com/TheGauravsahu/school-api/internal/modules/user"
 )
 
@@ -21,11 +22,13 @@ func main() {
 	schoolRepo := school.NewRepository(config.DB)
 	studentRepo := student.NewRepository(config.DB)
 	attendanceRepo := attendance.NewRepository(config.DB)
+	teacherRepo := teacher.NewRepository(config.DB)
 
 	authService := auth.NewService(schoolRepo, userRepo)
 	authHandler := auth.NewHandler(authService)
 	studentHandler := student.NewHandler(userRepo, studentRepo)
-	adminHandler := admin.NewHandler(studentHandler)
+	teacherHandler := teacher.NewHandler(teacherRepo, userRepo)
+	adminHandler := admin.NewHandler(studentHandler, teacherHandler)
 	attendaceHandler := attendance.NewHandler(attendanceRepo)
 
 	auth.Router(authHandler)
