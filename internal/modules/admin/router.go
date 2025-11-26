@@ -15,4 +15,6 @@ func Router(h *Handler) {
 	http.HandleFunc("DELETE /api/admin/students/{id}", middlewares.AuthMiddleware(h.StudentHandler.DeleteStudent, "ADMIN"))
 
 	http.HandleFunc("POST /api/admin/teachers", middlewares.AuthMiddleware(h.TeacherHandler.CreateTeacher, "ADMIN"))
+	http.HandleFunc("POST /api/admin/teachers/import", middlewares.AuthMiddleware(h.TeacherHandler.ImportTeachers, "ADMIN"))
+
 }

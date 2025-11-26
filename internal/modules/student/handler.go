@@ -7,6 +7,7 @@ import (
 
 	"github.com/TheGauravsahu/school-api/internal/modules/user"
 	"github.com/TheGauravsahu/school-api/internal/utils"
+	"gorm.io/gorm"
 )
 
 type Handler struct {
@@ -23,8 +24,6 @@ func NewHandler(userRepo *user.Repository, studentRepo *Repository) *Handler {
 
 type CreateStudentRequest struct {
 	SchoolID  uint   `json:"school_id"`
-	Username  string `json:"username"`
-	Password  string `json:"password"`
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
 	Age       int    `json:"age"`
@@ -39,43 +38,59 @@ func (h *Handler) CreateStudent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hashed, err := utils.HashPassword(body.Password)
+	username := utils.GenerateUsername(body.FirstName, body.LastName, int(body.RollNo))
+	password := utils.GeneratePassword()
+	hashChan := make(chan string)
+	go func() {
+		hashed, _ := utils.HashPassword(password)
+		hashChan <- hashed
+	}()
+	hashedPassword := <-hashChan
+
+	var createdStudent *Student
+	err := h.StudentRepo.db.Transaction(func(tx *gorm.DB) error {
+		user := &user.User{
+			Username: username,
+			Password: hashedPassword,
+			Role:     "STUDENT",
+			SchoolID: body.SchoolID,
+		}
+		if err := tx.Create(user).Error; err != nil {
+			return err
+		}
+
+		// create student
+		student := &Student{
+			UserID:    user.ID,
+			SchoolID:  body.SchoolID,
+			FirstName: body.FirstName,
+			LastName:  body.LastName,
+			Age:       body.Age,
+			ClassID:   body.ClassID,
+			Section:   body.Section,
+			RollNo:    body.RollNo,
+		}
+
+		if err := tx.Create(student).Error; err != nil {
+			return err
+		}
+
+		createdStudent = student
+		return nil
+	})
+
 	if err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, "failed to hash password")
+		utils.WriteError(w, http.StatusInternalServerError, "Could not create student")
 		return
 	}
 
-	newUser := &user.User{
-		Username: body.Username,
-		Password: hashed,
-		Role:     "STUDENT",
-		SchoolID: body.SchoolID,
-	}
-
-	if err := h.UserRepo.CreateUser(newUser); err != nil {
-		utils.WriteError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	student := &Student{
-		UserID:    newUser.ID,
-		SchoolID:  body.SchoolID,
-		FirstName: body.FirstName,
-		LastName:  body.LastName,
-		Age:       body.Age,
-		ClassID:   body.ClassID,
-		Section:   body.Section,
-		RollNo:    body.RollNo,
-	}
-
-	if err := h.StudentRepo.CreateStudent(student); err != nil {
-		utils.WriteError(w, http.StatusBadRequest, err.Error())
-		return
-	}
+	go func(email, username, p string) {
+		utils.SendWelcomeEmail(email, username, p)
+	}(createdStudent.Email, username, password)
 
 	utils.WriteJson(w, http.StatusCreated, map[string]any{
 		"message": "Student created successfully.",
-		"student": student,
+		"student": createdStudent,
 	})
 
 }
