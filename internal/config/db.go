@@ -3,6 +3,7 @@ package config
 import (
 	"log"
 
+	"github.com/TheGauravsahu/school-api/internal/modules/attendance"
 	"github.com/TheGauravsahu/school-api/internal/modules/school"
 	"github.com/TheGauravsahu/school-api/internal/modules/student"
 	"github.com/TheGauravsahu/school-api/internal/modules/user"
@@ -27,6 +28,7 @@ func ConnectDB() {
 		&school.School{},
 		&user.User{},
 		&student.Student{},
+		&attendance.Attendance{},
 	)
 	if err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)

@@ -12,3 +12,8 @@ func SendWelcomeEmail(toEmail, username, password string) {
 		// TODO: integrate SMTP, handle retries, templating, HTML, etc.
 	}()
 }
+
+func SendAbsenceEmail(toEmail, subject, body string) error {
+	fmt.Printf("[EMAIL] to=%s subject=%s body=%s\n", toEmail, subject, body)
+	return nil
+}

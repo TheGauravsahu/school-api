@@ -14,6 +14,13 @@ type Handler struct {
 	StudentRepo *Repository
 }
 
+func NewHandler(userRepo *user.Repository, studentRepo *Repository) *Handler {
+	return &Handler{
+		UserRepo:    userRepo,
+		StudentRepo: studentRepo,
+	}
+}
+
 type CreateStudentRequest struct {
 	SchoolID  uint   `json:"school_id"`
 	Username  string `json:"username"`
