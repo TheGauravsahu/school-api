@@ -6,4 +6,5 @@ type Teacher struct {
 	FirstName string `gorm:"not null"`
 	LastName  string `gorm:"not null"`
 	Subject   string `gorm:"not null"`
+	PhoneNo   string `gorm:"not null"`
 }
